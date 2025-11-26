@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subastas de Brainrots | Roblox</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+/* ===========================
+   GENERAL + FONDO ANIMADO
+=========================== */
+body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    color: #fff;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    transition: background 0.5s, color 0.5s;
+}
+body.dark { background: #0f0f10; color: #fff; }
+body.light { background: #f5f5f5; color: #111; }
+
+body::before {
+    content:"";
+    position: fixed; top:0; left:0;
+    width:200%; height:200%;
+    background: radial-gradient(circle at 20% 30%, #4f46e5 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, #e546c4 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, #46e5cb 0%, transparent 40%);
+    animation: moverFondo 22s infinite alternate ease-in-out;
+    z-index:-1; opacity:0.3;
+}
+@keyframes moverFondo {
+    0% {transform:translate(0,0) scale(1);}
+    50% {transform:translate(-15%, -10%) scale(1.25);}
+    100% {transform:translate(10%,10%) scale(1);}
+}
+
+/* ===========================
+   NAV
+=========================== */
+nav {
+    position: fixed; top:0; width:100%;
+    background: rgba(15,15,20,0.7);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    padding: 12px;
+    border-bottom: 1px solid #2a2a2d;
+    z-index: 1000;
+}
+nav a, nav button {
+    color:#cfcfcf; text-decoration:none;
+    background:none; border:none; cursor:pointer; font-size:1rem;
+    transition:0.2s;
+}
+nav a:hover, nav button:hover { color:#4f46e5; }
+
+/* ===========================
+   NOTIFICACIONES
+=========================== */
+#toast {
+    position: fixed; top: 20px; right: 20px;
+    padding: 15px 20px; border-radius: 10px;
+    background: #4f46e5; color:white;
+    opacity:0; transform:translateY(-20px); transition:.3s;
+    box-shadow: 0 0 15px #4f46e5; z-index:3000;
+}
+
+/* ===========================
+   SECCIONES
+=========================== */
+section { padding: 90px 10%; }
+.box {
+    background: rgba(26,26,29,0.75); padding:25px;
+    border-radius:12px; border:1px solid #2d2d30;
+    max-width:800px; margin:auto;
+}
+
+/* ===========================
+   CATÁLOGO
+=========================== */
+.catalogo {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 25px;
+}
+.item {
+    background: rgba(26,26,29,0.8);
+    padding:15px;
+    border-radius:10px; border:1px solid #2d2d30;
+    transition:0.2s;
+}
+.item:hover { transform: translateY(-6px) scale(1.02); }
+.countdown { margin-top:8px; text-align:center; background:rgba(23,23,26,0.7); padding:10px; border-radius:8px; }
+
+/* ===========================
+   PANEL ADMIN
+=========================== */
+#admin-panel { display:none; padding:100px 10%; }
+.admin-input, .admin-input-inline {
+    padding:6px 8px; margin-bottom:8px;
+    border-radius:6px; border:none;
+    background:#222; color:white; width:100%;
+}
+.admin-input-inline { width:100%; box-sizing:border-box; }
+.brainrot-admin { background:#111; padding:10px; margin-bottom:8px; border-radius:8px; display:flex; flex-direction:column; gap:4px; }
+.brainrot-admin .drag-handle { cursor:grab; margin-bottom:4px; color:#888; font-size:0.8rem; }
+
+/* ===========================
+   LOGIN ADMIN
+=========================== */
+#login-admin { display:none; max-width:400px; margin:auto; padding:100px 10%; }
+.login-input { width:100%; padding:10px; margin-bottom:12px; border-radius:8px; border:none; background:#111; color:white; }
+
+/* ===========================
+   BOTON TEMA
+=========================== */
+#theme-btn { font-size:1.2rem; cursor:pointer; background:none; border:none; }
+
+/* ===========================
+   GOOGLE FORM
+=========================== */
+#form-section { padding:50px 10%; text-align:center; }
+#form-section iframe {
+    width:100%; max-width:700px; height:800px;
+    border:0; border-radius:12px; box-shadow:0 0 25px rgba(0,0,0,0.5);
+    transition: transform 0.5s, opacity 0.5s; opacity:0; transform: translateY(20px);
+}
+#form-section iframe.visible { opacity:1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<nav>
+    <a href="#inicio">Inicio</a>
+    <a href="#catalogo">Catálogo</a>
+    <a href="#reglas">Reglas</a>
+    <a href="#ganadores">Ganadores</a>
+    <a href="#form-section">Participar</a>
+    <button onclick="mostrarLoginAdmin()">Admin</button>
+    <button id="theme-btn" onclick="cambiarTema()">🌙</button>
+</nav>
+
+<!-- INICIO -->
+<section id="inicio"><h1>Subastas de Brainrots</h1></section>
+
+<!-- CATÁLOGO -->
+<section id="catalogo">
+    <h2>Catálogo</h2>
+    <div class="catalogo" id="catalogo-box"></div>
+</section>
+
+<!-- REGLAS -->
+<section id="reglas">
+<h2>Reglas</h2>
+<div class="box">✔ No troleo ✔ Ofertas reales ✔ Fin al terminar contador</div>
+</section>
+
+<!-- GANADORES -->
+<section id="ganadores">
+<h2>Ganadores</h2>
+<div class="box" id="ganadores-box">
+    <p>🏆 Ganador 1: <span id="g1">—</span></p>
+    <p>🏆 Ganador 2: <span id="g2">—</span></p>
+    <p>🏆 Ganador 3: <span id="g3">—</span></p>
+</div>
+</section>
+
+<!-- GOOGLE FORM -->
+<section id="form-section">
+<h2>Participa en la Subasta</h2>
+<iframe id="form-iframe" src="https://docs.google.com/forms/d/e/1FAIpQLSdSOGeo64QWvzUKQzutD0vxiKRSVg7z5ii7qWKlN-LFDNnJbA/viewform?embedded=true" onload="this.classList.add('visible')">Cargando…</iframe>
+</section>
+
+<!-- LOGIN ADMIN -->
+<div id="login-admin">
+    <h2>Iniciar sesión Admin</h2>
+    <input class="login-input" id="admin-pass" type="password" placeholder="Contraseña">
+    <button onclick="loginAdmin()">Entrar</button>
+</div>
+
+<!-- PANEL ADMIN -->
+<section id="admin-panel">
+<h2>Panel de Administrador</h2>
+
+<h3>Agregar Brainrot</h3>
+<input class="admin-input" id="b-name" placeholder="Nombre">
+<input class="admin-input" id="b-price" placeholder="Precio">
+<input class="admin-input" id="b-img" placeholder="URL Imagen">
+<input class="admin-input" id="b-date" type="datetime-local">
+<button onclick="agregarBrainrot()">Agregar Brainrot</button>
+
+<h3>Brainrots Existentes</h3>
+<div id="brainrot-list"></div>
+<button onclick="guardarTodo()">💾 Guardar Todo</button>
+
+<h3>Ganadores</h3>
+<input class="admin-input" id="in1" placeholder="Ganador 1">
+<input class="admin-input" id="in2" placeholder="Ganador 2">
+<input class="admin-input" id="in3" placeholder="Ganador 3">
+<button onclick="guardarGanadores()">Guardar Ganadores</button>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+<h3>Dashboard</h3>
+<p>👁️ Visitas: <span id="visitas">0</span></p>
+<p>🛠️ Cambios realizados: <span id="cambios">0</span></p>
+<p>📅 Último login: <span id="last-login">—</span></p>
+<h3>Historial de acciones</h3>
+<div id="logs-box"></div>
+</div>
+</section>
+
+<script>
+// ===========================
+// TOAST
+// ===========================
+function toast(msg){
+    const t=document.getElementById("toast");
+    t.innerText=msg; t.style.opacity=1; t.style.transform="translateY(0)";
+    setTimeout(()=>{ t.style.opacity=0; t.style.transform="translateY(-20px)"; },2500);
+}
+
+// ===========================
+// VISITAS
+// ===========================
+let v=Number(localStorage.getItem("visitas")||0); v++;
+localStorage.setItem("visitas",v);
+document.getElementById("visitas").innerText=v;
+
+// ===========================
+// LOGIN ADMIN
+// ===========================
+function mostrarLoginAdmin(){ document.getElementById("login-admin").style.display="block"; }
+function loginAdmin(){
+    const pass=document.getElementById("admin-pass").value;
+    if(pass==="admin5421"){
+        localStorage.setItem("last-login",new Date().toLocaleString());
+        toast("Bienvenido administrador");
+        addLog("Inicio de sesión");
+        document.getElementById("login-admin").style.display="none";
+        document.getElementById("admin-panel").style.display="block";
+        mostrarDashboard();
+        cargarBrainrots();
+        cargarGanadores();
+    } else { toast("Contraseña incorrecta"); }
+}
+
+// ===========================
+// LOGS
+// ===========================
+function addLog(text){
+    const logs=JSON.parse(localStorage.getItem("logs")||"[]");
+    logs.push(`${new Date().toLocaleString()} — ${text}`);
+    localStorage.setItem("logs",JSON.stringify(logs));
+    mostrarLogs();
+}
+function mostrarLogs(){
+    const logs=JSON.parse(localStorage.getItem("logs")||"[]");
+    document.getElementById("logs-box").innerHTML=logs.map(l=>`<p>${l}</p>`).join("");
+}
+
+// ===========================
+// DASHBOARD
+// ===========================
+function mostrarDashboard(){
+    document.getElementById("cambios").innerText=localStorage.getItem("cambios")||0;
+    document.getElementById("last-login").innerText=localStorage.getItem("last-login")||"—";
+    mostrarLogs();
+}
+
+// ===========================
+// GANADORES
+// ===========================
+function guardarGanadores(){
+    localStorage.setItem("g1",document.getElementById("in1").value);
+    localStorage.setItem("g2",document.getElementById("in2").value);
+    localStorage.setItem("g3",document.getElementById("in3").value);
+    addLog("Ganadores editados");
+    toast("Ganadores guardados");
+    cargarGanadores();
+}
+function cargarGanadores(){
+    document.getElementById("g1").innerText=localStorage.getItem("g1")||"—";
+    document.getElementById("g2").innerText=localStorage.getItem("g2")||"—";
+    document.getElementById("g3").innerText=localStorage.getItem("g3")||"—";
+    document.getElementById("in1").value=localStorage.getItem("g1")||"";
+    document.getElementById("in2").value=localStorage.getItem("g2")||"";
+    document.getElementById("in3").value=localStorage.getItem("g3")||"";
+}
+
+// ===========================
+// BRAINROTS DINÁMICOS
+// ===========================
+function cargarBrainrots(){
+    const brainrots=JSON.parse(localStorage.getItem("brainrots")||"[]");
+    const catalogo=document.getElementById("catalogo-box");
+    const lista=document.getElementById("brainrot-list");
+    catalogo.innerHTML=""; lista.innerHTML="";
+    brainrots.forEach((b,i)=>{
+        const div=document.createElement("div");
+        div.className="item";
+        div.innerHTML=`<h3>${b.nombre}</h3>
+        <img src="${b.imagen}" style="width:100%;border-radius:8px;">
+        <p>💰 Precio: ${b.precio}</p>
+        <div class="countdown" id="timer${i}"></div>`;
+        catalogo.appendChild(div);
+        iniciarContador(`timer${i}`,new Date(b.fechaFin).getTime());
+
+        const brDiv=document.createElement("div");
+        brDiv.className="brainrot-admin";
+        brDiv.draggable=true;
+        brDiv.dataset.index=i;
+        brDiv.innerHTML=`<div class="drag-handle">☰ Arrastrar</div>
+        <input class="admin-input-inline" value="${b.nombre}" data-prop="nombre">
+        <input class="admin-input-inline" value="${b.precio}" data-prop="precio">
+        <input class="admin-input-inline" value="${b.imagen}" data-prop="imagen">
+        <input class="admin-input-inline" type="datetime-local" value="${b.fechaFin}" data-prop="fechaFin">
+        <button onclick="eliminarBrainrot(${i})">Eliminar</button>`;
+        lista.appendChild(brDiv);
+        brDiv.querySelectorAll("input").forEach(inp=>{
+            inp.addEventListener("input",()=>{ brainrots[i][inp.dataset.prop]=inp.value; });
+        });
+    });
+    enableDragDrop(lista);
+}
+function guardarTodo(){
+    const brainrots=[];
+    document.querySelectorAll("#brainrot-list .brainrot-admin").forEach(div=>{
+        const inputs=div.querySelectorAll("input");
+        const b={};
+        inputs.forEach(inp=>{ b[inp.dataset.prop]=inp.value; });
+        brainrots.push(b);
+    });
+    localStorage.setItem("brainrots",JSON.stringify(brainrots));
+    let c=Number(localStorage.getItem("cambios")||0)+1;
+    localStorage.setItem("cambios",c);
+    addLog("Brainrots guardados (guardar todo)");
+    toast("Todos los cambios guardados");
+    cargarBrainrots();
+}
+function agregarBrainrot(){
+    const name=document.getElementById("b-name").value;
+    const price=document.getElementById("b-price").value;
+    const img=document.getElementById("b-img").value;
+    const date=document.getElementById("b-date").value;
+    if(!name||!price||!img||!date){ toast("Completa todos los campos"); return; }
+    const brainrots=JSON.parse(localStorage.getItem("brainrots")||"[]");
+    brainrots.push({nombre:name,precio:price,imagen:img,fechaFin:date});
+    localStorage.setItem("brainrots",JSON.stringify(brainrots));
+    let c=Number(localStorage.getItem("cambios")||0)+1;
+    localStorage.setItem("cambios",c);
+    addLog("Brainrot agregado");
+    toast("Brainrot agregado");
+    cargarBrainrots();
+}
+function eliminarBrainrot(i){
+    const brainrots=JSON.parse(localStorage.getItem("brainrots")||"[]");
+    brainrots.splice(i,1);
+    localStorage.setItem("brainrots",JSON.stringify(brainrots));
+    let c=Number(localStorage.getItem("cambios")||0)+1;
+    localStorage.setItem("cambios",c);
+    addLog("Brainrot eliminado");
+    toast("Brainrot eliminado");
+    cargarBrainrots();
+}
+
+// ===========================
+// DRAG & DROP
+// ===========================
+function enableDragDrop(container){
+    let dragSrcEl=null;
+    container.querySelectorAll(".brainrot-admin").forEach(item=>{
+        item.addEventListener("dragstart",e=>{ dragSrcEl=item; e.dataTransfer.effectAllowed='move'; });
+        item.addEventListener("dragover",e=>{ e.preventDefault(); });
+        item.addEventListener("drop",e=>{
+            e.preventDefault();
+            if(dragSrcEl!=item){
+                const nodes=[...container.children];
+                const from=nodes.indexOf(dragSrcEl);
+                const to=nodes.indexOf(item);
+                if(from<to){ item.after(dragSrcEl); } else { item.before(dragSrcEl); }
+                guardarTodo();
+            }
+        });
+    });
+}
+
+// ===========================
+// COUNTDOWN
+// ===========================
+function iniciarContador(id,fecha){
+    const el=document.getElementById(id);
+    function run(){
+        let t=fecha-Date.now();
+        if(t<=0){ el.innerHTML="⛔ Terminada"; return; }
+        let d=Math.floor(t/86400000);
+        let h=Math.floor((t%86400000)/3600000);
+        let m=Math.floor((t%3600000)/60000);
+        let s=Math.floor((t%60000)/1000);
+        el.innerHTML=`${d}d ${h}h ${m}m ${s}s`;
+    }
+    run();
+    setInterval(run,1000);
+}
+
+// ===========================
+// TEMA CLARO / OSCURO
+// ===========================
+function cambiarTema(){
+    let tema=document.body.classList.contains("dark")?"light":"dark";
+    document.body.className=tema;
+    localStorage.setItem("theme",tema);
+    document.getElementById("theme-btn").innerText=tema==="dark"?"🌙":"☀️";
+}
+document.body.className=localStorage.getItem("theme")||"dark";
+document.getElementById("theme-btn").innerText=document.body.classList.contains("dark")?"🌙":"☀️";
+</script>
+
+</body>
+</html>
